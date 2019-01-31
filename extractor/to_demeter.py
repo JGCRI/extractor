@@ -14,8 +14,8 @@ class GcamToDemeter:
     :param f_region_ref:                Full path with file name and extension to the input GCAM region reference file
     :param f_out:                       OPTIONAL (default None) Full path with file name and extension to save the output
     :param l_yrs:                       OPTIONAL (default 2010-2100) A list or tuple of desired GCAM years to output
-    :param region_name_field:           OPTIONAL (default 'region') Region field name in the GCAM region reference file
-    :param region_id_field:             OPTIONAL (default 'region_id') Region id field name in the GCAM region
+    :param region_name_field:           OPTIONAL (default 'gcam_region_name') Region field name in the GCAM region reference file
+    :param region_id_field:             OPTIONAL (default 'gcam_region_id') Region id field name in the GCAM region
                                         reference file
     :param basin_name_field:            OPTIONAL (default 'glu_name') Basin GLU abbreviation field name in the GCAM
                                         basin reference file
@@ -44,7 +44,7 @@ class GcamToDemeter:
     DEMETER_METRIC_FIELD = 'metric_id'
 
     def __init__(self, dr_gcam_db, f_gcam_db, f_query, f_basin_ref, f_region_ref, f_out=None,
-                 l_yrs=range(2010, 2105, 5), region_name_field='region', region_id_field='region_id',
+                 l_yrs=range(2010, 2105, 5), region_name_field='gcam_region_name', region_id_field='gcam_region_id',
                  basin_name_field='glu_name', basin_id_field='basin_id', output_to_csv=False):
 
         self.f_basin_ref = f_basin_ref
@@ -138,6 +138,7 @@ class GcamToDemeter:
 
         :return:              Data frame
         """
+
         df = self.conn.runQuery(self.query)
 
         # get only target years as defined by the user
@@ -148,6 +149,9 @@ class GcamToDemeter:
         df[GcamToDemeter.DEMETER_REGID_FIELD] = df[self.GCAM_REGION_FIELD].map(self.d_regions)
 
         df[GcamToDemeter.DEMETER_LANDCLASS_FIELD] = df[GcamToDemeter.GCAM_LANDALLOC_FIELD].apply(self.parse_landclass)
+
+        # rename region name field to what is specified by the user
+        df.rename(columns={GcamToDemeter.GCAM_REGION_FIELD: self.region_name_field}, inplace=True)
 
         df[self.basin_name_field] = df[GcamToDemeter.GCAM_LANDALLOC_FIELD].apply(self.parse_basin_name)
 
@@ -178,3 +182,25 @@ class GcamToDemeter:
             piv.to_csv(self.f_out, index=False)
 
         return piv
+
+
+if __name__ == '__main__':
+
+    import os
+
+    root = '/Users/d3y010/projects/demeter/neal'
+
+    gcam_db_dir = os.path.join(root, 'gcam_outputs')
+    gcam_db_name = 'ssp1_rcp60_gfdl'
+    query = os.path.join(root, 'reference', 'query_land_reg32_basin235_gcam5p0.xml')
+    basin_file = os.path.join(root, 'reference', 'gcam_basin_lookup.csv')
+    region_file = os.path.join(root, 'reference', 'gcam_regions_32.csv')
+
+    out_file = '/Users/d3y010/Desktop/test.csv'
+
+    x = GcamToDemeter(gcam_db_dir, gcam_db_name, query, basin_file, region_file, f_out=out_file,
+                      l_yrs=range(2010, 2105, 5), region_name_field='gcam_region_name',
+                      region_id_field='gcam_region_id', basin_name_field='glu_name', basin_id_field='basin_id',
+                      output_to_csv=True)
+
+    x.extract_land()
