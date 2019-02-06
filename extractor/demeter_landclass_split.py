@@ -16,7 +16,7 @@ class GcamLandclassSplit:
     :param metric:                  Name of the subregion used. Either 'basin_id' or 'aez_id'.
     :param out_file:                Full path with file name and extension for the altered projected data file.
 
-    :return:                        Data frame; optionally, save as file
+    :return:                        Data frame; save as file
     """
     # region id field name used by Demeter
     REGION_ID_FIELD = 'region_id'
@@ -37,6 +37,9 @@ class GcamLandclassSplit:
 
         # name of the combined region and subregion field
         self.subregion_field = 'reg_{}'.format(self.metric.split('_')[0])
+
+        # disaggregate landclass
+        self.df = self.disaggregate_landclass()
 
     def calc_observed_fraction(self):
         """Calculate the fraction of land area for each target observed landclass per subregion.
@@ -72,13 +75,16 @@ class GcamLandclassSplit:
         # fill subregions that have none of the target values with 0
         gdf.fillna(0, inplace=True)
 
-        return gdf
+        return gdf, frac_lcs
 
-    def process_basin(self):
-        """Process region, basin subregion."""
+    def disaggregate_landclass(self):
+        """Disaggregate GCAM target landclass using observed data fraction.  Save output to file.
+
+        :return:                    Data frame
+        """
 
         # get the fractional area from each landclass from the observed data
-        obs_df = self.calc_observed_fraction()
+        obs_df, frac_lcs = self.calc_observed_fraction()
 
         prj_df = pd.read_csv(self.projected_file)
 
@@ -105,6 +111,10 @@ class GcamLandclassSplit:
 
             # add new outputs to data frame
             out_df = pd.concat([idf, out_df])
+
+        # drop processing columns
+        frac_lcs.append(self.subregion_field)
+        out_df.drop(frac_lcs, axis=1, inplace=True)
 
         out_df.to_csv(self.out_file, index=False)
 
