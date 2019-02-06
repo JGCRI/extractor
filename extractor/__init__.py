@@ -6,4 +6,4 @@ Common uses are to prepare data from a GCAM database for use by other models and
 
 __version__ = pkg_resources.get_distribution('extractor').version
 
-__all__ = ['to_demeter']
+__all__ = ['to_demeter', 'landclass_redistribute']
