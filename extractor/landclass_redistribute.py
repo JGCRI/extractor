@@ -31,9 +31,9 @@ class GcamLandclassSplit:
 
         self.observed_file = observed_file
         self.projected_file = projected_file
-        self.target_landclass = target_landclass.lower()
-        self.observed_landclasses = [i.lower() for i in observed_landclasses]
-        self.metric = metric.lower()
+        self.target_landclass = target_landclass
+        self.observed_landclasses = observed_landclasses
+        self.metric = metric
         self.out_file = out_file
 
         # name of the combined region and subregion field
@@ -53,6 +53,9 @@ class GcamLandclassSplit:
         gdf = df.groupby([GcamLandclassSplit.REGION_ID_FIELD, self.metric]).sum(axis=1)
         gdf.reset_index(inplace=True)
 
+        # create key
+        gdf[self.subregion_field] = gdf[GcamLandclassSplit.REGION_ID_FIELD].astype(str) + '_' + gdf[self.metric].astype(str)
+
         # sum observed landclasses (e.g., snow + sparse) per subregion
         gdf['total'] = gdf[self.observed_landclasses].sum(axis=1)
 
@@ -61,9 +64,8 @@ class GcamLandclassSplit:
         for lc in self.observed_landclasses:
             frac_lc = 'frac_{}'.format(lc)
             frac_lcs.append(frac_lc)
-            gdf[frac_lc] = gdf[lc] / gdf['total']
 
-        gdf[self.subregion_field] = df[GcamLandclassSplit.REGION_ID_FIELD].astype(str) + '_' + gdf[self.metric].astype(str)
+            gdf[frac_lc] = gdf[lc] / gdf['total']
 
         drop_cols = self.observed_landclasses + ['total', GcamLandclassSplit.REGION_ID_FIELD, self.metric]
         gdf.drop(drop_cols, axis=1, inplace=True)
@@ -84,8 +86,12 @@ class GcamLandclassSplit:
         # add region_metric field
         prj_df[self.subregion_field] = prj_df[GcamLandclassSplit.REGION_ID_FIELD].astype(str) + '_' + prj_df[GcamLandclassSplit.PRJ_METRIC_ID_FIELD].astype(str)
 
+        # print(prj_df.head())
+
         # join fractional fields from observed data
         prj_df = pd.merge(prj_df, obs_df, on=self.subregion_field, how='left')
+
+        # print(prj_df.head())
 
         # data frame containing only the target landclass records
         lc_df = prj_df.loc[prj_df[GcamLandclassSplit.PRJ_LANDCLASS_FIELD] == self.target_landclass].copy()
@@ -95,6 +101,8 @@ class GcamLandclassSplit:
 
         for lc in self.observed_landclasses:
             idf = lc_df.copy()
+
+            # print(idf.head())
 
             # set landclass to new field name
             idf[GcamLandclassSplit.PRJ_LANDCLASS_FIELD] = lc
