@@ -1,4 +1,3 @@
-import numpy as np
 import pandas as pd
 
 
@@ -86,12 +85,8 @@ class GcamLandclassSplit:
         # add region_metric field
         prj_df[self.subregion_field] = prj_df[GcamLandclassSplit.REGION_ID_FIELD].astype(str) + '_' + prj_df[GcamLandclassSplit.PRJ_METRIC_ID_FIELD].astype(str)
 
-        # print(prj_df.head())
-
         # join fractional fields from observed data
         prj_df = pd.merge(prj_df, obs_df, on=self.subregion_field, how='left')
-
-        # print(prj_df.head())
 
         # data frame containing only the target landclass records
         lc_df = prj_df.loc[prj_df[GcamLandclassSplit.PRJ_LANDCLASS_FIELD] == self.target_landclass].copy()
@@ -101,8 +96,6 @@ class GcamLandclassSplit:
 
         for lc in self.observed_landclasses:
             idf = lc_df.copy()
-
-            # print(idf.head())
 
             # set landclass to new field name
             idf[GcamLandclassSplit.PRJ_LANDCLASS_FIELD] = lc
@@ -116,20 +109,3 @@ class GcamLandclassSplit:
         out_df.to_csv(self.out_file, index=False)
 
         return out_df
-
-
-if __name__ == '__main__':
-
-    # TODO old lc not removed, new ones not being added to output
-
-    obs = '/Users/d3y010/projects/demeter/zhongwei/run_modis-v6-2010_mirca_5arcmin/inputs/observed/gcam_reg32_basin235_modis_v6_2010_mirca_2000_5arcmin_sqdeg_wgs84_04Jan2019.csv'
-    prj = '/Users/d3y010/projects/demeter/zhongwei/run_modis-v6-2010_mirca_5arcmin/inputs/projected/ssp1_regbasin_land.csv'
-    prj_out = '/Users/d3y010/projects/demeter/zhongwei/run_modis-v6-2010_mirca_5arcmin/inputs/projected/ssp1_regbasin_land_split.csv'
-
-    c = GcamLandclassSplit(observed_file=obs,
-                           projected_file=prj,
-                           target_landclass='RockIceDesert',
-                           observed_landclasses=['snow', 'sparse'],
-                           metric='basin_id',
-                           out_file=prj_out)
-    c.process_basin()
