@@ -14,6 +14,7 @@ class GcamLandclassSplit:
     :param target_landclass:        Name of the landclass from the projected file to split (e.g. RockIceDesert).
     :param observed_landclasses:    List of landclass names from the observed data to substitute (e.g. ['snow', 'sparse'].
     :param metric:                  Name of the subregion used. Either 'basin_id' or 'aez_id'.
+    :param gcam_year_list:          List of GCAM years to process.
     :param out_file:                Full path with file name and extension for the altered projected data file.
 
     :return:                        Data frame; save as file
@@ -23,16 +24,15 @@ class GcamLandclassSplit:
     PRJ_METRIC_ID_FIELD = 'metric_id'
     PRJ_LANDCLASS_FIELD = 'landclass'
 
-    # years to process
-    GCAM_YRS = [str(i) for i in range(2010, 2105, 5)]
-
-    def __init__(self, observed_file, projected_file, target_landclass, observed_landclasses, metric, out_file):
+    def __init__(self, observed_file, projected_file, target_landclass, observed_landclasses, metric, gcam_year_list,
+                 out_file):
 
         self.observed_file = observed_file
         self.projected_file = projected_file
         self.target_landclass = target_landclass
         self.observed_landclasses = observed_landclasses
         self.metric = metric
+        self.gcam_year_list = [str(i) for i in gcam_year_list]
         self.out_file = out_file
 
         # name of the combined region and subregion field
@@ -106,7 +106,7 @@ class GcamLandclassSplit:
             # set landclass to new field name
             idf[GcamLandclassSplit.PRJ_LANDCLASS_FIELD] = lc
 
-            for yr in GcamLandclassSplit.GCAM_YRS:
+            for yr in self.gcam_year_list:
                 idf[yr] *= idf['frac_{}'.format(lc)]
 
             # add new outputs to data frame
