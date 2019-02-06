@@ -7,8 +7,8 @@ def get_requirements():
 
 setup(
     name='extractor',
-    version='0.0.0',
-    description='Extract data from a GCAM database and format',
+    version='0.1.0',
+    description='Extract data from a GCAM database and format for use by other GCAM ecosystem models.',
     url='https://github.com/JGCRI/extractor',
     packages=find_packages(),
     license='MIT',
